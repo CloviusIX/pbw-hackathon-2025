@@ -33,11 +33,15 @@ This project leverages **FastAPI** to expose high-performance REST APIs powered 
 ### Clone & Install
 
 ```bash
-git clone https://github.com/yourusername/xrpl-fastapi.git
-cd xrpl-fastapi
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+git clone https://github.com/CloviusIX/pbw-hackathon-2025.git
+source .venv/bin/activate
+make
+```
+
+### Run
+
+```bash
+make run
 ```
 
 ### Environment Setup
