@@ -1,0 +1,11 @@
+[tool.ruff]
+line-length = 120
+respect-gitignore = true
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip = ["venv", "__init__.py"]
+
+[project]
+requires-python = ">=3.13.1"
