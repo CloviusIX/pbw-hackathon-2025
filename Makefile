@@ -25,6 +25,9 @@ depfreeze: venv
 	# Generate a requirements.txt file with all the dependencies installed in the virtual environment
 	$(PIP) freeze > requirements.txt
 
+run:
+	fastapi dev main.py
+
 lint:
 	ruff check --select I  # Check import sorting
 	ruff format --check  # Check formatting
