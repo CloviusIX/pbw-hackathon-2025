@@ -1,14 +1,18 @@
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from xrpl import CryptoAlgorithm
 from xrpl.asyncio.clients import AsyncJsonRpcClient
+from xrpl.models import IssuedCurrencyAmount
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
-from xrpl_backend_2025.services.xrpl.accounts import get_account_info
-from xrpl_backend_2025.services.xrpl.transaction import send_payment
+from xrpl_backend_2025.constants.xrpl_constants import RLUSD_CURRENCY, RLUSD_ISSUER
+from xrpl_backend_2025.services.xrpl.accounts import get_account_info, get_account_objects, get_check_id
+from xrpl_backend_2025.services.xrpl.transaction import send_check, send_payment
+from xrpl_backend_2025.utils.xrpl_utils import to_hex_memo, to_invoice_id
 
 router = APIRouter()
 
@@ -48,3 +52,40 @@ async def create_payment(payment: PaymentRequest) -> PaymentResponse:
         return PaymentResponse(hash=tx_hash, balance=int(new_native_balance))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class CheckRequest(BaseModel):
+    amount: int
+    destination: str
+    memo: Optional[str]
+    invoice_id: Optional[str]
+    seed: str
+
+
+class CheckResponse(BaseModel):
+    check_hash: Optional[str]
+    check_id: Optional[str]
+
+
+@router.post("/checks")
+async def create_check(check: CheckRequest) -> CheckResponse:
+    rpc_node = settings.xrpl_node
+    client = AsyncJsonRpcClient(rpc_node)
+    wallet = Wallet.from_seed(seed=check.seed, algorithm=CryptoAlgorithm.ED25519)
+    icm = IssuedCurrencyAmount(value=check.amount, currency=RLUSD_CURRENCY, issuer=RLUSD_ISSUER)
+
+    memo = check.memo and to_hex_memo(check.memo) or None
+    invoice_id = check.invoice_id and to_invoice_id(check.invoice_id) or None
+
+    check_hash = await send_check(
+        client=client,
+        sender_wallet=wallet,
+        destination=check.destination,
+        send_iou_max=icm,
+        memo=memo,
+        invoice_id=invoice_id,
+    )
+
+    account_objects = await get_account_objects(client, check.destination)
+    check_id = await get_check_id(account_objects)
+    return CheckResponse(check_hash=check_hash, check_id=check_id)
