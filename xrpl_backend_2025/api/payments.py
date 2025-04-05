@@ -1,7 +1,4 @@
-from typing import Optional
-
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from xrpl import CryptoAlgorithm
 from xrpl.asyncio.clients import AsyncJsonRpcClient
@@ -10,6 +7,7 @@ from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
 from xrpl_backend_2025.constants.xrpl_constants import RLUSD_CURRENCY, RLUSD_ISSUER
+from xrpl_backend_2025.schemas.payments import CheckRequest, CheckResponse, PaymentRequest, PaymentResponse
 from xrpl_backend_2025.services.xrpl.accounts import get_account_info, get_account_objects, get_check_id
 from xrpl_backend_2025.services.xrpl.transaction import send_check, send_payment
 from xrpl_backend_2025.utils.xrpl_utils import to_hex_memo, to_invoice_id
@@ -18,31 +16,20 @@ router = APIRouter()
 
 
 class Settings(BaseSettings):
-    xrpl_node: str = "default_value"
+    xrpl_node: str = ""
 
     class Config:
         env_file = ".env"
 
 
 settings = Settings()
-
-
-class PaymentRequest(BaseModel):
-    amount: int
-    destination: str
-    seed: str
-
-
-class PaymentResponse(BaseModel):
-    hash: str
-    balance: int
+RPC_NODE = settings.xrpl_node
 
 
 @router.post("/")
 async def create_payment(payment: PaymentRequest) -> PaymentResponse:
     try:
-        rpc_node = settings.xrpl_node
-        client = AsyncJsonRpcClient(rpc_node)
+        client = AsyncJsonRpcClient(RPC_NODE)
         wallet = Wallet.from_seed(seed=payment.seed, algorithm=CryptoAlgorithm.ED25519)
 
         tx = await send_payment(client, wallet, xrp_to_drops(payment.amount), payment.destination)
@@ -54,23 +41,9 @@ async def create_payment(payment: PaymentRequest) -> PaymentResponse:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class CheckRequest(BaseModel):
-    amount: int
-    destination: str
-    memo: Optional[str]
-    invoice_id: Optional[str]
-    seed: str
-
-
-class CheckResponse(BaseModel):
-    check_hash: Optional[str]
-    check_id: Optional[str]
-
-
 @router.post("/checks")
 async def create_check(check: CheckRequest) -> CheckResponse:
-    rpc_node = settings.xrpl_node
-    client = AsyncJsonRpcClient(rpc_node)
+    client = AsyncJsonRpcClient(RPC_NODE)
     wallet = Wallet.from_seed(seed=check.seed, algorithm=CryptoAlgorithm.ED25519)
     icm = IssuedCurrencyAmount(value=check.amount, currency=RLUSD_CURRENCY, issuer=RLUSD_ISSUER)
 
