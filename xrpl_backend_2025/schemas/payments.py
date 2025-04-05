@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class PaymentBase(BaseModel):
     amount: int
     destination: str
+    memo: Optional[str]
     seed: str
 
 
@@ -20,7 +21,6 @@ class PaymentResponse(BaseModel):
 
 # For IOU checks with memo/invoice_id
 class CheckRequest(PaymentBase):
-    memo: Optional[str]
     invoice_id: Optional[str]
 
 

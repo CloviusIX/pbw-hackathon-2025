@@ -31,8 +31,9 @@ async def create_payment(payment: PaymentRequest) -> PaymentResponse:
     try:
         client = AsyncJsonRpcClient(RPC_NODE)
         wallet = Wallet.from_seed(seed=payment.seed, algorithm=CryptoAlgorithm.ED25519)
+        memo = payment.memo and to_hex_memo(payment.memo) or None
 
-        tx = await send_payment(client, wallet, xrp_to_drops(payment.amount), payment.destination)
+        tx = await send_payment(client, wallet, xrp_to_drops(payment.amount), payment.destination, memo)
         account_info = await get_account_info(client=client, wallet_address=wallet.address)
         new_native_balance = account_info.account_data.balance
         tx_hash = tx and tx.get("hash") or ""

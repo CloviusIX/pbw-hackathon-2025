@@ -11,8 +11,10 @@ async def send_payment(
     wallet: Wallet,
     amount_to_send: str | IssuedCurrencyAmount,
     destination: str,
+    memo: Optional[Memo],
 ) -> dict[str, Any] | None:
-    payment = Payment(account=wallet.address, amount=amount_to_send, destination=destination)
+    memos = memo and [memo] or None
+    payment = Payment(account=wallet.address, amount=amount_to_send, destination=destination, memos=memos)
     signed_tx = await autofill_and_sign(payment, client, wallet)
     # TODO ? It's also a good idea to take note of the latest validated ledger index before you submit.
     try:
