@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,6 +14,7 @@ class AccountObject(BaseModel):
     destination: Annotated[str, Field(alias="Destination")]
     destination_node: Annotated[str, Field(alias="DestinationNode")]
     flags: Annotated[int, Field(alias="Flags")]
+    invoice_id: Annotated[Optional[str], Field(alias="InvoiceID", default=None)]
     ledger_entry_type: Annotated[str, Field(alias="LedgerEntryType")]
     owner_node: Annotated[str, Field(alias="OwnerNode")]
     previous_txn_id: Annotated[str, Field(alias="PreviousTxnID")]
@@ -26,5 +27,6 @@ class AccountObject(BaseModel):
 class AccountObjectsData(BaseModel):
     account: Annotated[str, Field(alias="account")]
     account_objects: Annotated[List[AccountObject], Field(alias="account_objects")]
-    ledger_current_index: Annotated[int, Field(alias="ledger_current_index")]
+    ledger_hash: Annotated[Optional[str], Field(alias="ledger_hash")]
+    ledger_index: Annotated[Optional[int], Field(alias="ledger_index")]
     validated: Annotated[bool, Field(alias="validated")]

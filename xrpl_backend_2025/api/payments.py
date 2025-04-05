@@ -45,6 +45,8 @@ async def create_payment(payment: PaymentRequest) -> PaymentResponse:
 async def create_check(check: CheckRequest) -> CheckResponse:
     client = AsyncJsonRpcClient(RPC_NODE)
     wallet = Wallet.from_seed(seed=check.seed, algorithm=CryptoAlgorithm.ED25519)
+
+    # using $RLUSD by default for presentation and avoid price volatility
     icm = IssuedCurrencyAmount(value=check.amount, currency=RLUSD_CURRENCY, issuer=RLUSD_ISSUER)
 
     memo = check.memo and to_hex_memo(check.memo) or None

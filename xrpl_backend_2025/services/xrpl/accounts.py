@@ -16,8 +16,8 @@ async def get_account_info(client: AsyncJsonRpcClient, wallet_address: str) -> P
 
 async def get_account_objects(client: AsyncJsonRpcClient, destination: str) -> AccountObjectsData:
     account_object = AccountObjects(account=destination, type=AccountObjectType.CHECK, ledger_index="validated")
-
     response = await client.request(account_object)
+
     account = AccountObjectsData.model_validate(response.result)
     return account
 
