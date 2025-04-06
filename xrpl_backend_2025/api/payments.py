@@ -1,5 +1,4 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic_settings import BaseSettings
 from xrpl import CryptoAlgorithm
 from xrpl.asyncio.clients import AsyncJsonRpcClient
@@ -8,7 +7,13 @@ from xrpl.utils import xrp_to_drops
 from xrpl.wallet import Wallet
 
 from xrpl_backend_2025.constants.xrpl_constants import RLUSD_CURRENCY, RLUSD_ISSUER, RLUSD_PATH_STEP
-from xrpl_backend_2025.schemas.payments import CheckRequest, CheckResponse, PaymentRequest, PaymentResponse
+from xrpl_backend_2025.schemas.payments import (
+    CheckRequest,
+    CheckResponse,
+    CrossPaymentRequest,
+    PaymentRequest,
+    PaymentResponse,
+)
 from xrpl_backend_2025.services.xrpl.accounts import (
     get_account_info,
     get_account_objects,
@@ -29,22 +34,17 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-RPC_NODE = settings.xrpl_node
 
 
-class CrossPaymentRequest(BaseModel):
-    xrp_amount: int
-    iou_currency: str
-    iou_amount: str
-    iou_issuer: str
-    destination: str
-    seed: str
+async def get_xrpl_client() -> AsyncJsonRpcClient:
+    return AsyncJsonRpcClient(settings.xrpl_node)
 
 
 @router.post("/")
-async def create_native_payment(payment: PaymentRequest) -> PaymentResponse:
+async def create_native_payment(
+    payment: PaymentRequest, client: AsyncJsonRpcClient = Depends(get_xrpl_client)
+) -> PaymentResponse:
     try:
-        client = AsyncJsonRpcClient(RPC_NODE)
         wallet = Wallet.from_seed(seed=payment.seed, algorithm=CryptoAlgorithm.ED25519)
         memo = payment.memo and to_hex_memo(payment.memo) or None
 
@@ -64,11 +64,10 @@ async def create_native_payment(payment: PaymentRequest) -> PaymentResponse:
 
 
 @router.post("/cross")
-async def create_cross_payment(payment: CrossPaymentRequest) -> PaymentResponse:
+async def create_cross_payment(
+    payment: CrossPaymentRequest, client: AsyncJsonRpcClient = Depends(get_xrpl_client)
+) -> PaymentResponse:
     try:
-        # TODO dependency injection for client
-        rpc_node = settings.xrpl_node
-        client = AsyncJsonRpcClient(rpc_node)
         wallet = Wallet.from_seed(seed=payment.seed, algorithm=CryptoAlgorithm.ED25519)
 
         # set trust line to iou
@@ -98,8 +97,7 @@ async def create_cross_payment(payment: CrossPaymentRequest) -> PaymentResponse:
 
 
 @router.post("/checks")
-async def create_check(check: CheckRequest) -> CheckResponse:
-    client = AsyncJsonRpcClient(RPC_NODE)
+async def create_check(check: CheckRequest, client: AsyncJsonRpcClient = Depends(get_xrpl_client)) -> CheckResponse:
     wallet = Wallet.from_seed(seed=check.seed, algorithm=CryptoAlgorithm.ED25519)
 
     # using $RLUSD by default for presentation and avoid price volatility
