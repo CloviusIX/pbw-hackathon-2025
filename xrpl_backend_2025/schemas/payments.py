@@ -25,5 +25,5 @@ class CheckRequest(PaymentBase):
 
 
 class CheckResponse(BaseModel):
-    check_hash: Optional[str]
-    check_id: Optional[str]
+    check_hash: str
+    check_id: str

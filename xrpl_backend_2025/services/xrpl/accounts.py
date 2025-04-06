@@ -1,5 +1,3 @@
-from typing import Optional
-
 from xrpl.asyncio.clients import AsyncJsonRpcClient
 from xrpl.models import AccountInfo, AccountObjects, AccountObjectType
 
@@ -22,6 +20,6 @@ async def get_account_objects(client: AsyncJsonRpcClient, destination: str) -> A
     return account
 
 
-async def get_check_id(account: AccountObjectsData) -> Optional[str]:
-    check_id = account.account_objects and account.account_objects[0].index or None
+async def get_check_id(account: AccountObjectsData) -> str:
+    check_id = account.account_objects and account.account_objects[0].index or ""
     return check_id
