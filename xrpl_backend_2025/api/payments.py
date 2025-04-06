@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic_settings import BaseSettings
-from xrpl import CryptoAlgorithm
 from xrpl.asyncio.clients import AsyncJsonRpcClient
 from xrpl.models import IssuedCurrencyAmount
 from xrpl.utils import xrp_to_drops
@@ -45,7 +44,7 @@ async def create_native_payment(
     payment: PaymentRequest, client: AsyncJsonRpcClient = Depends(get_xrpl_client)
 ) -> PaymentResponse:
     try:
-        wallet = Wallet.from_seed(seed=payment.seed, algorithm=CryptoAlgorithm.ED25519)
+        wallet = Wallet.from_seed(seed=payment.seed)
         memo = payment.memo and to_hex_memo(payment.memo) or None
 
         tx_hash = await send_payment(
@@ -68,7 +67,7 @@ async def create_cross_payment(
     payment: CrossPaymentRequest, client: AsyncJsonRpcClient = Depends(get_xrpl_client)
 ) -> PaymentResponse:
     try:
-        wallet = Wallet.from_seed(seed=payment.seed, algorithm=CryptoAlgorithm.ED25519)
+        wallet = Wallet.from_seed(seed=payment.seed)
 
         # set trust line to iou
         # TODO: check if trust line already exist ?
@@ -97,7 +96,7 @@ async def create_cross_payment(
 
 @router.post("/checks")
 async def create_check(check: CheckRequest, client: AsyncJsonRpcClient = Depends(get_xrpl_client)) -> CheckResponse:
-    wallet = Wallet.from_seed(seed=check.seed, algorithm=CryptoAlgorithm.ED25519)
+    wallet = Wallet.from_seed(seed=check.seed)
 
     # using $RLUSD by default for presentation and avoid price volatility
     icm = IssuedCurrencyAmount(value=check.amount, currency=RLUSD_CURRENCY, issuer=RLUSD_ISSUER)
