@@ -79,7 +79,7 @@ async def create_cross_payment(
         # assuming we swap for $RLUSD
         token_to_swap_for = RLUSD_PATH_STEP
 
-        tx = await swap_xrp_for_token(
+        tx_hash = await swap_xrp_for_token(
             client=client,
             sender_wallet=wallet,
             destination=payment.destination,
@@ -90,7 +90,6 @@ async def create_cross_payment(
 
         account_info = await get_account_info(client=client, wallet_address=wallet.address)
         new_native_balance = account_info.account_data.balance
-        tx_hash = tx and tx.get("hash") or ""
         return PaymentResponse(hash=tx_hash, balance=int(new_native_balance))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

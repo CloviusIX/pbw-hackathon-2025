@@ -1,6 +1,5 @@
 from typing import Optional
 
-from typing_extensions import Any
 from xrpl.asyncio.clients import AsyncJsonRpcClient
 from xrpl.asyncio.transaction import XRPLReliableSubmissionException, autofill_and_sign, submit_and_wait
 from xrpl.models import CheckCreate, IssuedCurrencyAmount, Memo, PathStep, Payment
@@ -61,7 +60,7 @@ async def swap_xrp_for_token(
     token_to_swap_for: PathStep,  # IOU (e.g., RLUSD) in hex format
     iou_amount: str,  # e.g., "100" RLUSD
     max_xrp_to_send: str,  # e.g., "5000000" drops (5 XRP)
-) -> dict[str, Any] | None:
+) -> str:
     # Create a cross-currency Payment transaction (XRP ➡ IOU)
     if not token_to_swap_for.currency or not token_to_swap_for.issuer:
         raise Exception("The token_to_swap_for's fields should not be empty")
@@ -78,16 +77,15 @@ async def swap_xrp_for_token(
                 token_to_swap_for,
             ]
         ],
-        flags=131072,  # tfPartialPayment
+        flags=131072,  # tfPartialPayment => presentation purpose => proof of risk
     )
 
     try:
         # sign and submit transaction
-        # payment = await autofill(payment, client)
         signed_tx = await autofill_and_sign(payment, client, sender_wallet)
         tx = await submit_and_wait(signed_tx, client, sender_wallet)
-        return tx.result
-
     except XRPLReliableSubmissionException as e:
-        print(f"Failed to submit payment: {e}")
-        return None
+        raise Exception(f"Failed to submit payment: {e}")
+
+    tx_data = TransactionData.model_validate(tx.result)
+    return tx_data.hash

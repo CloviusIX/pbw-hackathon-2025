@@ -1,10 +1,10 @@
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
 
-# === Currency ===
-class SendMax(BaseModel):
+# === Amounts ===
+class CurrencyAmount(BaseModel):
     currency: Annotated[str, Field(alias="currency")]
     issuer: Annotated[str, Field(alias="issuer")]
     value: Annotated[str, Field(alias="value")]
@@ -19,19 +19,24 @@ class MemoWrapper(BaseModel):
     memo: Annotated[Memo, Field(alias="Memo")]
 
 
-# === Fields used across multiple node types ===
+# === Final/Previous/New Fields ===
 class FinalFields(BaseModel):
     account: Annotated[Optional[str], Field(alias="Account", default=None)]
-    balance: Annotated[Optional[str], Field(alias="Balance", default=None)]
+    balance: Annotated[Optional[Union[str, CurrencyAmount]], Field(alias="Balance", default=None)]
     flags: Annotated[Optional[int], Field(alias="Flags", default=None)]
     owner_count: Annotated[Optional[int], Field(alias="OwnerCount", default=None)]
     sequence: Annotated[Optional[int], Field(alias="Sequence", default=None)]
+    amm_id: Annotated[Optional[str], Field(alias="AMMID", default=None)]
+    high_limit: Annotated[Optional[CurrencyAmount], Field(alias="HighLimit", default=None)]
+    low_limit: Annotated[Optional[CurrencyAmount], Field(alias="LowLimit", default=None)]
+    high_node: Annotated[Optional[str], Field(alias="HighNode", default=None)]
+    low_node: Annotated[Optional[str], Field(alias="LowNode", default=None)]
     owner: Annotated[Optional[str], Field(alias="Owner", default=None)]
     root_index: Annotated[Optional[str], Field(alias="RootIndex", default=None)]
 
 
 class PreviousFields(BaseModel):
-    balance: Annotated[Optional[str], Field(alias="Balance", default=None)]
+    balance: Annotated[Optional[Union[str, CurrencyAmount]], Field(alias="Balance", default=None)]
     owner_count: Annotated[Optional[int], Field(alias="OwnerCount", default=None)]
     sequence: Annotated[Optional[int], Field(alias="Sequence", default=None)]
 
@@ -40,7 +45,7 @@ class NewFields(BaseModel):
     account: Annotated[Optional[str], Field(alias="Account", default=None)]
     destination: Annotated[Optional[str], Field(alias="Destination", default=None)]
     invoice_id: Annotated[Optional[str], Field(alias="InvoiceID", default=None)]
-    send_max: Annotated[Optional[SendMax], Field(alias="SendMax", default=None)]
+    send_max: Annotated[Optional[CurrencyAmount], Field(alias="SendMax", default=None)]
     sequence: Annotated[Optional[int], Field(alias="Sequence", default=None)]
 
 
@@ -63,27 +68,33 @@ class CreatedNode(BaseModel):
 class AffectedNode(BaseModel):
     modified_node: Optional[ModifiedNode] = Field(default=None, alias="ModifiedNode")
     created_node: Optional[CreatedNode] = Field(default=None, alias="CreatedNode")
-    # deleted_node: Optional[DeletedNode] = Field(default=None, alias="DeletedNode")  # You can add this if needed
 
 
-# === Metadata (meta) ===
+# === Meta ===
 class Meta(BaseModel):
     affected_nodes: Annotated[List[AffectedNode], Field(alias="AffectedNodes")]
     transaction_index: Annotated[int, Field(alias="TransactionIndex")]
     transaction_result: Annotated[str, Field(alias="TransactionResult")]
-    delivered_amount: Optional[str] = Field(default=None, alias="delivered_amount")
+    delivered_amount: Annotated[Optional[Union[str, CurrencyAmount]], Field(alias="delivered_amount", default=None)]
 
 
-# === Transaction JSON (tx_json) ===
+# === tx_json ===
+class PathStep(BaseModel):
+    currency: Optional[str]
+    issuer: Optional[str]
+    type: Optional[int]
+
+
 class TxJson(BaseModel):
     account: Annotated[str, Field(alias="Account")]
+    deliver_max: Annotated[Optional[Union[str, CurrencyAmount]], Field(alias="DeliverMax", default=None)]  # <-- FIXED
     destination: Annotated[str, Field(alias="Destination")]
     fee: Annotated[str, Field(alias="Fee")]
     flags: Annotated[int, Field(alias="Flags")]
-    invoice_id: Annotated[Optional[str], Field(alias="InvoiceID", default=None)]
     last_ledger_sequence: Annotated[int, Field(alias="LastLedgerSequence")]
     memos: Annotated[Optional[List[MemoWrapper]], Field(alias="Memos", default=None)]
-    send_max: Annotated[Optional[SendMax], Field(alias="SendMax", default=None)]
+    paths: Annotated[Optional[List[List[PathStep]]], Field(alias="Paths", default=None)]
+    send_max: Annotated[Optional[Union[str, CurrencyAmount]], Field(alias="SendMax", default=None)]
     sequence: Annotated[int, Field(alias="Sequence")]
     signing_pub_key: Annotated[str, Field(alias="SigningPubKey")]
     transaction_type: Annotated[str, Field(alias="TransactionType")]
