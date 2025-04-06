@@ -1,6 +1,6 @@
-# 🗼 XRPL FastAPI Service — Paris Blockchain Week 2025
+# 🗼 XRPL FastAPI Service — Paris Blockchain Week 2025 Hackathon
 
-Welcome to the XRPL FastAPI project, developed for [Paris Blockchain Week 2025](https://www.parisblockchainweek.com/)! 🇫🇷
+Welcome to the XRPL FastAPI project, developed for [Paris Blockchain Week 2025 Hackathon](https://www.parisblockchainweek.com/hackathon-2025)! 🇫🇷
 
 This project leverages **FastAPI** to expose high-performance REST APIs powered by the **XRP Ledger (XRPL)**. It provides an easy interface for developers, dApps, and enterprises to interact with the decentralized XRPL ecosystem.
 
@@ -15,11 +15,9 @@ This project leverages **FastAPI** to expose high-performance REST APIs powered 
 
 ## 📦 Tech Stack
 
-- **Python 3.10+**  
+- **Python 3.13.1+**  
 - **FastAPI**  
-- **XRPL-Py**  
-- **Uvicorn** (ASGI server)  
-- **Pydantic** for request validation  
+- **XRPL-Py**
 
 ---
 
@@ -27,8 +25,7 @@ This project leverages **FastAPI** to expose high-performance REST APIs powered 
 
 ### Prerequisites
 
-- Python 3.10+
-- (Optional) Docker
+- Python 3.13.1+
 
 ### Clone & Install
 
