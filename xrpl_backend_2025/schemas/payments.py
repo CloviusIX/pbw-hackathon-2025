@@ -27,3 +27,12 @@ class CheckRequest(PaymentBase):
 class CheckResponse(BaseModel):
     check_hash: str
     check_id: str
+
+
+class CrossPaymentRequest(BaseModel):
+    xrp_amount: int
+    iou_currency: str
+    iou_amount: str
+    iou_issuer: str
+    destination: str
+    seed: str
