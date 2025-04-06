@@ -1,9 +1,11 @@
-from typing import Any, Optional
+from typing import Optional
 
 from xrpl.asyncio.clients import AsyncJsonRpcClient
 from xrpl.asyncio.transaction import XRPLReliableSubmissionException, autofill_and_sign, submit_and_wait
 from xrpl.models import CheckCreate, IssuedCurrencyAmount, Memo, Payment
 from xrpl.wallet import Wallet
+
+from xrpl_backend_2025.models.transaction import TransactionData
 
 
 async def send_payment(
@@ -11,17 +13,18 @@ async def send_payment(
     wallet: Wallet,
     amount_to_send: str | IssuedCurrencyAmount,
     destination: str,
-) -> dict[str, Any] | None:
-    payment = Payment(account=wallet.address, amount=amount_to_send, destination=destination)
+    memo: Optional[Memo],
+) -> str:
+    memos = memo and [memo] or None
+    payment = Payment(account=wallet.address, amount=amount_to_send, destination=destination, memos=memos)
     signed_tx = await autofill_and_sign(payment, client, wallet)
-    # TODO ? It's also a good idea to take note of the latest validated ledger index before you submit.
     try:
         tx = await submit_and_wait(signed_tx, client, wallet)
     except XRPLReliableSubmissionException as e:
-        print(f"Failed to submit payment: {e}")
-        return None
+        raise Exception(f"Failed to submit payment: {e}")
 
-    return tx.result
+    tx_data = TransactionData.model_validate(tx.result)
+    return tx_data.hash
 
 
 async def send_check(
@@ -31,7 +34,7 @@ async def send_check(
     send_iou_max: IssuedCurrencyAmount,
     memo: Optional[Memo],
     invoice_id: Optional[str],
-) -> Optional[str]:
+) -> str:
     check_create_tx = CheckCreate(
         account=sender_wallet.classic_address,
         destination=destination,
@@ -41,5 +44,10 @@ async def send_check(
     )
 
     signed_check = await autofill_and_sign(check_create_tx, client, sender_wallet)
-    result = await submit_and_wait(signed_check, client, sender_wallet)
-    return result.result.get("hash") or None
+    try:
+        tx = await submit_and_wait(signed_check, client, sender_wallet)
+    except XRPLReliableSubmissionException as e:
+        raise Exception(f"Failed to send check: {e}")
+    print(tx.result)
+    tx_data = TransactionData.model_validate(tx.result)
+    return tx_data.hash
