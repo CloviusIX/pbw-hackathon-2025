@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from xrpl.asyncio.clients import AsyncJsonRpcClient
-from xrpl.models import AccountInfo, AccountObjects, AccountObjectType
+from xrpl.models import AccountInfo, AccountLines, AccountObjects, AccountObjectType
 from xrpl.utils import drops_to_xrp
 
 from xrpl_backend_2025.models.account_info import AccountInfoData
@@ -30,3 +30,18 @@ async def get_check_id(account: AccountObjectsData) -> str:
 
 async def get_xrp_balance(account_info: AccountInfoData) -> Decimal:
     return drops_to_xrp(account_info.account_data.balance)
+
+
+async def get_iou_balance(
+    client: AsyncJsonRpcClient, wallet_address: str, iou_issuer: str, iou_currency: str
+) -> Decimal:
+    response = await client.request(AccountLines(account=wallet_address))
+
+    lines = response.result["lines"]
+
+    balance = next(
+        (line["balance"] for line in lines if line["account"] == iou_issuer and line["currency"] == iou_currency),
+        Decimal(0),
+    )
+
+    return Decimal(balance)
