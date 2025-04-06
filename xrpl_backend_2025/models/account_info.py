@@ -32,7 +32,7 @@ class AccountFlags(BaseModel):
     require_destination_tag: Annotated[bool, Field(alias="requireDestinationTag")]
 
 
-class PydanticAccountInfo(BaseModel):
+class AccountInfoData(BaseModel):
     account_data: AccountData
     account_flags: AccountFlags
     ledger_hash: str

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Optional
 
 from pydantic import BaseModel
@@ -16,7 +17,7 @@ class PaymentRequest(PaymentBase):
 
 class PaymentResponse(BaseModel):
     hash: str
-    balance: int
+    balance: Decimal
 
 
 # For IOU checks with memo/invoice_id

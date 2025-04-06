@@ -17,6 +17,7 @@ from xrpl_backend_2025.services.xrpl.accounts import (
     get_account_info,
     get_account_objects,
     get_check_id,
+    get_xrp_balance,
 )
 from xrpl_backend_2025.services.xrpl.transaction import send_check, send_payment, swap_xrp_for_token
 from xrpl_backend_2025.services.xrpl.trust_line import set_trustline
@@ -55,8 +56,8 @@ async def create_native_payment(
             memo=memo,
         )
         account_info = await get_account_info(client=client, wallet_address=wallet.address)
-        new_native_balance = account_info.account_data.balance
-        return PaymentResponse(hash=tx_hash, balance=int(new_native_balance))
+        new_native_balance = await get_xrp_balance(account_info)
+        return PaymentResponse(hash=tx_hash, balance=new_native_balance)
     except Exception as e:
         # TODO: manage UNFUNDED_PAYMENT
         raise HTTPException(status_code=500, detail=str(e))
@@ -88,8 +89,8 @@ async def create_cross_payment(
         )
 
         account_info = await get_account_info(client=client, wallet_address=wallet.address)
-        new_native_balance = account_info.account_data.balance
-        return PaymentResponse(hash=tx_hash, balance=int(new_native_balance))
+        new_native_balance = await get_xrp_balance(account_info)
+        return PaymentResponse(hash=tx_hash, balance=new_native_balance)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
